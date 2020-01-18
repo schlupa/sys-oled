@@ -33,6 +33,10 @@ if os.path.isfile(config_file):
     if config.has_option('device', 'storage2_name'):
         s2_name = config.get('device', 'storage2_name')
         s2_path = config.get('device', 'storage2_path')
+        s3_name = config.get('device', 'storage3_name')
+        s3_path = config.get('device', 'storage3_path')
+        s4_name = config.get('device', 'storage4_name')
+        s4_path = config.get('device', 'storage4_path')
 
 
 # Load font
@@ -80,11 +84,18 @@ def cpu_usage():
         % (av1, av2, av3, str(uptime).split(',')[0])
 
 
+def mem_percent():
+    usage = psutil.virtual_memory()
+    return (usage.used / float(usage.total)) * 128.
+
 def mem_usage():
     usage = psutil.virtual_memory()
     return "mem: %s / %s - %.0f%%" \
         % (bytes2human(usage.used), bytes2human(usage.total), usage.percent)
 
+def disk_percent(dir):
+    usage = psutil.disk_usage(dir)
+    return (usage.used / float(usage.total)) * 128.
 
 def disk_usage(name, dir):
     usage = psutil.disk_usage(dir)
@@ -108,12 +119,25 @@ def display_info(device):
     d.text((0, 0), cpu_usage(), font=font, fill="white")
     d.line([(0,13),(128,13)])
     d.text((0, 15), mem_usage(), font=font, fill="white")
-    d.text((0, 27), disk_usage(s1_name, s1_path), font=font, fill="white")
-    if 's2_name' in globals():
-        d.text((0, 39), disk_usage(s2_name, s2_path), font=font, fill="white")
-        d.text((0, 51), network(net_name), font=font, fill="white")
+    d.rectangle([(0,15),(mem_percent(),26)])
+    if 's4_name' in globals():
+        d.text((0, 27), disk_usage(s2_name, s2_path), font=font, fill="white")
+        d.rectangle([(0,27),(disk_percent(s2_path),38)])
+        d.text((0, 39), disk_usage(s3_name, s3_path), font=font, fill="white")
+        d.rectangle([(0,39),(disk_percent(s3_path),50)])
+        d.text((0, 51), disk_usage(s4_name, s4_path), font=font, fill="white")
+        d.rectangle([(0,51),(disk_percent(s4_path),62)])
     else:
-        d.text((0, 39), network(net_name), font=font, fill="white")
+        d.text((0, 27), disk_usage(s1_name, s1_path), font=font, fill="white")
+        if 's3_name' in globals():
+            d.text((0, 39), disk_usage(s2_name, s2_path), font=font, fill="white")
+            d.text((0, 51), disk_usage(s3_name, s3_path), font=font, fill="white")
+        else:
+            if 's2_name' in globals():
+                d.text((0, 39), disk_usage(s2_name, s2_path), font=font, fill="white")
+                d.text((0, 51), network(net_name), font=font, fill="white")
+            else:
+                d.text((0, 39), network(net_name), font=font, fill="white")
     device.display(txt.convert(device.mode))
 
 
